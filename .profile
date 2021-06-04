@@ -164,3 +164,43 @@ upstream ()
 	done < <(git for-each-ref --format='%(refname:short)' refs/heads/*)
 
 }
+
+findTests ()
+{
+	set ROOT_DIR="/root/directory"
+	set BRANCH_TO_CHECK=master
+
+	cd ${ROOT_DIR}
+	#git checkout ${BRANCH_TO_CHECK} 2>&1 > /dev/null
+
+	set COMP_TEST_DIRS=\
+	"${ROOT_DIR}/sub1" \
+	"${ROOT_DIR}/sub2" \
+	"${ROOT_DIR}/sub3" \
+	"${ROOT_DIR}/sub4"
+
+	echo "<html>"
+	echo "<head> <title> Found Component tests </title> </head>"
+
+	echo "<body>"
+	find ${COMP_TEST_DIRS} -name "*.java" | \
+		xargs egrep -A 1 "^[[:space:]]*@Test|^[[:space:]]*package[[:space:]]" | \
+		egrep -v "@Test|\-[[:space:]]*$" | \
+		sed "s/-[[:space:]]/:/g" | \
+		sed "s/:[[:space:]]/:/g" | \
+		sed "s/;//g" | \
+		awk -v pkg='####' 'BEGIN { FS=":";OFS=";";}{ if ( match($2,"package ") ) { pkg=substr($2,RSTART+RLENGTH); } else { print $1, pkg, $2 } }' | \
+		tr "/" "\\" | \
+		sed "s/^[\\]d/D:/g" | \
+		awk 'BEGIN {FS=";";} \
+		{ match($3,/[a-zA-Z0-9_]+\(\)/); \
+		 testFunction=substr($3,RSTART,RLENGTH); \
+		 fileLink="\"file:///" $1 "#:~:text=" testFunction "\""; \
+		 displayLink=$2"."testFunction; \
+		 print "<a href=" fileLink " target=\"_blank\">" displayLink "</a><br>"; }'
+
+	echo "</body>"
+
+	echo "</html>"
+
+}
