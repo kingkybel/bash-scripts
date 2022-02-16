@@ -382,9 +382,9 @@ jiraBranch ()
         FINISH=N
         DRY_RUN="echo -e "
         CURRENT_DIR=`pwd`
-        REPO_DIR=~/Repos/AES
+        REPO_DIR=~/Repos/MyRepo
         BASE_BRANCH=develop
-        JIRA_TEXT="AES-31 Complete unit test on workflow order"
+        JIRA_TEXT="some text"
         BRANCH_NAME="${BASE_BRANCH}/${JIRA_TEXT// /-}"
 
         USAGE="usage: jiraBranch -j <${EFGRN}'JIRA-number and header'${ERS}> [-r repo-directory] [-b <${EFGRN}base-branch${ERS}>] [-e)xecute]\n\
@@ -392,7 +392,7 @@ jiraBranch ()
 \t${EFYEL}-r${ERS} : directory of the repo, defaults to '${REPO_DIR}'\n\
 \t${EFYEL}-b${ERS} : based on branch, defaults to 'develop'\n\
 \t${EFYEL}-e${ERS} : execute commands, by default do a dry-run: just show commands that will be executed\n\
-\te.g.: taskBranch -j ${EFGRN}'AES-31 Complete unit test on workflow order'${ERS}\n\
+\te.g.: taskBranch -j ${EFGRN}'JIRA_123 Add XYZ-feature'${ERS}\n\
 \t\tcreates ${EFRED}local${ERS}:\t\t${EFGRN}${BRANCH_NAME}${ERS}  as branch of\n\
 \t\t${EFRED}remote${ERS}:\t\t\torigin/${EFCYN}develop${ERS} and\n\
 \t\ttracking ${EFRED}upstream${ERS}:\torigin/${EFGRN}${BRANCH_NAME}${ERS}\n"
@@ -522,6 +522,251 @@ findTests ()
 	echo "</html>"
 
 }
+
+EXECUTING_USER=$(whoami)
+CURRENT_RED_HAT_RELEASE="$(cat /etc/redhat-release)"
+IS_RED_HAT_7=$(if [[ $(cat /etc/redhat-release) == "Red Hat"*"release 7"* ]]; then echo Yes; else echo No; fi)
+IS_RED_HAT_8=$(if [[ $(cat /etc/redhat-release) == "Red Hat"*"release 8"* ]]; then echo Yes; else echo No; fi)
+
+# set the Linux commands ignoring functions and aliases
+WHICH_="which --skip-alias --skip-functions"
+AWK_=$(${WHICH_} awk)
+SED_=$(${WHICH_} sed)
+GREP_=$(${WHICH_} grep)
+EGREP_=$(${WHICH_} egrep)
+PS_=$(${WHICH_} ps)
+SLEEP_=$(${WHICH_} sleep)
+STRINGS_=$(${WHICH_} strings)
+ECHO_="$(${WHICH_} echo)"
+
+# term-cap colors, default to empty
+bold=""
+ul=""
+eul=""
+rev=""
+blink=""
+invis=""
+em=""
+eem=""
+black=""
+red=""
+green=""
+yellow=""
+blue=""
+magenta=""
+cyan=""
+white=""
+normal=""
+bblack=""
+bred=""
+bgreen=""
+byellow=""
+bblue=""
+bmagenta=""
+bcyan=""
+bwhite=""
+bnormal=""
+err_col=""
+warn_col=""
+info_col=""
+header_col=""
+debug_col=""
+even_col=""
+odd_col=""
+h_even_col=""
+h_odd_col=""
+reset=""
+
+# term-cap colors, if colors are supported
+case ${TERM} in
+'' | 'dumb' | 'unknown') ;; # use default empty term-caps
+*)                          # use minimal term-caps for other $TERM types
+     bold=$(tput bold)
+     ul=$(tput smul)
+     eul=$(tput rmul)
+     rev=$(tput rev)
+     blink=$(tput blink)
+     invis=$(tput invis)
+     em=$(tput smso)
+     eem=$(tput rmso)
+     black=$(tput setaf 0)
+     red=$(tput setaf 1)
+     green=$(tput setaf 2)
+     yellow=$(tput setaf 3)
+     blue=$(tput setaf 4)
+     magenta=$(tput setaf 5)
+     cyan=$(tput setaf 6)
+     white=$(tput setaf 7)
+     normal=$(tput setaf 9)
+     bblack=$(tput setab 0)
+     bred=$(tput setab 1)
+     bgreen=$(tput setab 2)
+     byellow=$(tput setab 3)
+     bblue=$(tput setab 4)
+     bmagenta=$(tput setab 5)
+     bcyan=$(tput setab 6)
+     bwhite=$(tput setab 7)
+     bnormal=$(tput setab 9)
+
+     err_col=${bred}${yellow}
+     warn_col=${bold}${byellow}${black}
+     info_col=${bold}${green}
+     header_col=${bold}${yellow}
+     debug_col=${bold}${rev}
+     usage_col=${bold}${yellow}
+     even_col=${green}
+     odd_col=${magenta}
+     h_even_col=${white}
+     h_odd_col=${cyan}
+
+     reset=$(tput sgr0)${eul}${eem}
+     ;;
+esac
+
+function printError() {
+     printf "%s" "${err_col}ERROR:${reset} "
+     ODD=No
+     for part in "$@"; do
+
+          if [ "${ODD}X" = "YesX" ]; then
+               printf "%s" "${odd_col}${part}${reset}"
+               ODD=No
+          else
+               printf "%s" "${even_col}${part}${reset}"
+               ODD=Yes
+          fi
+     done
+     printf "\r\n%s\r\n" "${yellow}Exiting.${reset}"
+}
+
+function printWarning() {
+     printf "%s" "${warn_col}WARNING:${reset} "
+     ODD=No
+     for part in "$@"; do
+
+          if [ "${ODD}X" = "YesX" ]; then
+               printf "%s" "${odd_col}${part}${reset}"
+               ODD=No
+          else
+               printf "%s" "${even_col}${part}${reset}"
+               ODD=Yes
+          fi
+     done
+     printf "%s\r\n" ""
+}
+
+function printInfo() {
+     printf "%s" "${info_col}INFO:${reset} "
+     ODD=No
+     for part in "$@"; do
+
+          if [ "${ODD}X" = "YesX" ]; then
+               printf "%s" "${odd_col}${part}${reset}"
+               ODD=No
+          else
+               printf "%s" "${even_col}${part}${reset}"
+               ODD=Yes
+          fi
+     done
+     printf "%s\r\n" ""
+}
+
+function printDebug() {
+     printf "%s" "${debug_col}DEBUG:${reset} "
+     ODD=No
+     for part in "$@"; do
+
+          if [ "${ODD}X" = "YesX" ]; then
+               printf "%s" "${odd_col}${part}${reset}"
+               ODD=No
+          else
+               printf "%s" "${even_col}${part}${reset}"
+               ODD=Yes
+          fi
+     done
+     printf "%s\r\n" ""
+}
+
+function printLine() {
+     ODD=No
+     for part in "$@"; do
+          if [ "${ODD}X" = "YesX" ]; then
+               printf "%s" "${odd_col}${part}${reset}"
+               ODD=No
+          else
+               printf "%s" "${even_col}${part}${reset}"
+               ODD=Yes
+          fi
+     done
+     printf "%s\r\n" ""
+}
+
+function printHeader() {
+     ODD=No
+     HEADER=""
+     LEN=0
+     for part in "$@"; do
+          LEN=$((LEN+${#part}))
+          if [ "${ODD}X" = "YesX" ]; then
+               HEADER="${HEADER}${h_odd_col}${part}"
+               ODD=No
+          else
+               HEADER="${HEADER}${h_even_col}${part}"
+               ODD=Yes
+          fi
+     done
+     EDGE_LEN=$(((100 - LEN) / 2))
+     EDGE=$(head -c $((EDGE_LEN)) </dev/zero | tr '\0' '#')
+     printf "%s %s %s\r\n" "${header_col}${EDGE}${reset}" "${HEADER}" "${header_col}${EDGE}${reset}"
+}
+
+function frame() {
+     LINE=$*
+     TOP_BOTTOM=\+$(head -c $(($(echo "${LINE}" | wc -m) + 1)) </dev/zero | tr '\0' '-')\+
+     printf "%s\r\n" "${TOP_BOTTOM}"
+     printf "| %s |\r\n" "${LINE}"
+     printf "%s\r\n" "${TOP_BOTTOM}"
+}
+
+# facility to fail a script upon failure of commands/groups of commands
+# usage: (bash commands... ) || failThisScript "<error message>" [optional error-code]
+function failThisScript() {
+     cmd_success=$?
+     fail_reason="$1"
+     if [ "$2X" != "X" ]; then
+          # override error code of last command
+          cmd_success=$2
+     fi
+     if [ "${cmd_success}X" != "0X" ]; then
+          printError "${fail_reason}. Code ${cmd_success}."
+          # exit with the error code of the last command or custom code, in case it was passed in
+          exit $((cmd_success))
+     fi
+}
+
+# make sure the given parameter does not evaluate to "" or "/"
+# "return" the valid absolute directory-path
+# also reject "INVALID_{...} directories"
+function setValidAbsoluteDir() {
+     DIR=$1
+     [[ "${DIR}" != "INVALID_"* ]] || DIR="${DIR}"
+     [ "${DIR}X" != "X" ] || DIR="INVALID_EMPTY"
+     [ "${DIR}X" != "/X" ] || DIR="INVALID_ROOT"
+     [[ "${DIR}" != "INVALID_"* ]] && realpath "${DIR}" >/dev/null 2>&1 && DIR=$(realpath ${DIR}) 
+     [[ "${DIR}" != "INVALID_"* ]] && DIR="$(dirname "${DIR}")/$(basename "${DIR}")"
+     ${ECHO_} "${DIR}/"
+}
+
+# create the directory if possible, cleans it and returns the real path
+function createEmptyDir() {
+     DIR=$(setValidAbsoluteDir "$1")
+     [[ "${DIR}" != "INVALID_"* ]] || exit 1
+     # remove it and all contents and re-create it
+     rm -rf "${DIR}"
+     mkdir -p "${DIR}"
+     ${ECHO_} "${DIR}"
+}
+
 
 
 
