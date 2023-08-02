@@ -1,5 +1,7 @@
 #!/bin/bash
 
+CURRENT_OS=$(uname)
+
 # Source global definitions
 if [ -f /etc/bashrc ]; then
 	. /etc/bashrc
@@ -90,27 +92,25 @@ EBMAG='\033[45m'	# background magenta
 EBCYN='\033[46m'	# background cyan
 EBWHT='\033[47m'	# background white
 
-export MY_HOST=`hostname`
+export MY_HOST=$(hostname)
 
-function prompt
-{
-	# if [ "X$BASH_VERSION" = "X" ] ; then
-	# 	XX=dummy
-	# else
+function prompt() {
+	PS1="\u@\h [\t]> "
 
-		PS1="\u@\h [\t]> "
+	if [ "${IS_LINUX}X" = "YesX" ]; then
+		if [ "$(whoami)X" = "rootX" ]; then
+			PS1="\$(date +%H:%M:%S) ${BRED}${FYEL}\u@\h ${FRED}[${FCYN}\w ${FRED}]>${RS} "
+		else
+			PS1="\$(date +%H:%M:%S) ${FBLE}\u@\h ${FRED}[${FCYN}\w ${FRED}]>${RS} "
+		fi
+		PS2='continue-> '
+		PS4='$0.$LINENO+ '
+	fi
 
-        if [ "${IS_LINUX}X" = "YesX" ] ; then
-			PS1="${TITLEBAR}${FBLE}\u@\h ${FRED}[${FCYN}\w ${FRED}]>${RS} "
-			PS2='continue-> '
-			PS4='$0.$LINENO+ '
-        fi
-
-        if [ "${IS_GITBASH}X" = "YesX" ] ; then
-			PS1="${HC}${FYEL}[${FMAG}\A${FRED}$(__git_ps1) ${FCYN}${debian_chroot:+($debian_chroot)}\u${FYEL}: ${FBLE}\w ${FYEL}> ${RS}"
-			PS2="${HC}${FYEL}&gt; ${RS}"
-        fi
-	# fi
+	if [ "${IS_GITBASH}X" = "YesX" ]; then
+		PS1="${HC}${FYEL}[${FMAG}\A${FRED}$(__git_ps1) ${FCYN}${debian_chroot:+($debian_chroot)}\u${FYEL}: ${FBLE}\w ${FYEL}> ${RS}"
+		PS2="${HC}${FYEL}&gt; ${RS}"
+	fi
 }
 prompt
 
@@ -291,10 +291,10 @@ function processSize
 	fi
 }
 
-function VALGRIND
+function doValgrind()
 {
         OPTIND=1
-	USAGE1="VALGRIND executable [ ... ]"
+	USAGE1="doValgrind executable [ ... ]"
 	LABEL=$1
 	ROOT_PATH="."
 	EXECUTABLE=$1
