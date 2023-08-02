@@ -1,4 +1,6 @@
 #!/bin/bash
+[[ "${0}" != "${BASH_SOURCE[0]}" ]] && THIS_FILE="${BASH_SOURCE[0]}" || THIS_FILE="${0}"
+THIS_DIR=$(realpath "$(dirname ${THIS_FILE})")
 
 CURRENT_OS=$(uname)
 
@@ -767,6 +769,37 @@ function createEmptyDir() {
      ${ECHO_} "${DIR}"
 }
 
+
+function pushDir() {
+     NEW_DIR=${1}
+     [ "${NEW_DIR}X" != "X" ] ||
+          failThisScript "Cannot change directory - no directory given"
+     pushd "${1}" >/dev/null 2>&1 ||
+          failThisScript "Cannot change into '${NEW_DIR}'"
+}
+
+function popDir() {
+     popd >/dev/null 2>&1 ||
+          failThisScript "Cannot return to previous directory"
+}
+
+function copy() {
+     cp -R "$1" "$2" ||
+          failThisScript "Cannot copy '$1' to '$2'"
+}
+
+INSTALL_TOOL=$(if [ "${IS_UBUNTU}" = "Yes" ]; then echo "apt-get"; else echo "yum"; fi)
+function installPackage() {
+     if [ "${1}X" != "X" ]; then
+          ${INSTALL_TOOL} install -y "$1" || failThisScript "Could not ${INSTALL_TOOL} install '$1'"
+     fi
+}
+
+function removePackage() {
+     if [ "${1}X" != "X" ]; then
+          ${INSTALL_TOOL} remove -y "$1" || failThisScript "Could not ${INSTALL_TOOL} remove '$1'"
+     fi
+}
 
 
 
