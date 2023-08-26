@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/bash -x
 [[ "${0}" != "${BASH_SOURCE[0]}" ]] && THIS_FILE="${BASH_SOURCE[0]}" || THIS_FILE="${0}"
 THIS_DIR=$(realpath "$(dirname ${THIS_FILE})")
 
@@ -8,12 +8,6 @@ CURRENT_OS=$(uname)
 if [ -f /etc/bashrc ]; then
 	. /etc/bashrc
 fi
-
-# User specific environment
-if ! [[ "$PATH" =~ "$HOME/.local/bin:$HOME/bin:" ]]; then
-	PATH="$HOME/.local/bin:$HOME/bin:$PATH"
-fi
-export PATH
 
 # Uncomment the following line if you don't like systemctl's auto-paging feature:
 # export SYSTEMD_PAGER=
@@ -119,10 +113,10 @@ stty erase ^H
 stty -istrip
 
 function addPath() {
-	PATHS=$(echo ${PATH} | tr ':' '\ ')
+	PATHS=$(echo "${PATH}" | tr ':' '\ ')
 	DONT_ADD=FALSE
 	for i in ${PATHS} nomore; do
-		if [ ${i} = nomore ]; then
+		if [ "${i}" = "nomore" ]; then
 			break
 		fi
 		if [ "${i}" = "${1}" ]; then
@@ -138,7 +132,7 @@ function addLDPath() {
 	PATHS=$(echo "${LD_LIBRARY_PATH}" | tr [:] [\ ])
 	DONT_ADD=FALSE
 	for i in ${PATHS} nomore; do
-		if [ "${i}" = nomore ]; then
+		if [ "${i}" = "nomore" ]; then
 			break
 		fi
 		if [ "${i}" = "${1}" ]; then
@@ -196,8 +190,8 @@ function totalSize() {
 		esac
 	done
 	if [ "X$DO_EXECUTE" = "X1" ]; then
-		SZ=$(du -s -k $CHECK_PATH | awk '{s+=$1} END {printf "%.0f", s*1024 }')
-		echo -e "size of \e[1m$CHECK_PATH\e[0m in bytes: \e[31m$SZ\e[0m"
+		SZ=$(du -s -k "${CHECK_PATH}" | awk '{s+=$1} END {printf "%.0f", s*1024 }')
+		echo -e "size of \e[1m${CHECK_PATH}\e[0m in bytes: \e[31m${SZ}\e[0m"
 	fi
 }
 
@@ -382,7 +376,6 @@ taskBranch() {
 }
 
 jiraBranch() {
-	local OPTIND verbose=0
 	FINISH=N
 	DRY_RUN="echo -e "
 	CURRENT_DIR=$(pwd)
@@ -438,11 +431,11 @@ jiraBranch() {
 
 }
 
-listBranches() {
+function listBranches() {
 	git for-each-ref --format='%(color:cyan)%(authordate:format:%m/%d/%Y %I:%M %p)    %(align:25,left)%(color:yellow)%(authorname)%(end) %(color:reset)%(refname:strip=3)' --sort=authordate refs/remotes
 }
 
-listRemoteBranches() {
+function listRemoteBranches() {
 	git for-each-ref \
 		--format='%(color:cyan)%(authordate:format:%m/%d/%Y %I:%M %p)    %(align:25,left)%(color:yellow)%(authorname)%(end) %(color:reset)%(refname:strip=3)' \
 		--sort=authordate refs/remotes |
@@ -450,7 +443,7 @@ listRemoteBranches() {
 
 }
 
-deleteLocal() {
+function deleteLocal() {
 	for b in $*; do
 		# delete branch locally
 		echo deleting local branch: ${b}
@@ -458,7 +451,7 @@ deleteLocal() {
 	done
 }
 
-deleteRemote() {
+function deleteRemote() {
 	for b in $*; do
 		# delete branch remotely
 		echo deleting remote branch: ${b}
@@ -466,12 +459,12 @@ deleteRemote() {
 	done
 }
 
-deleteBranches() {
+function deleteBranches() {
 	deleteLocal $*
 	deleteRemote $*
 }
 
-upstream() {
+function upstream() {
 	while read branch; do
 		upstream=$(git rev-parse --abbrev-ref $branch@{upstream} 2>/dev/null)
 		if [[ $? == 0 ]]; then
@@ -483,7 +476,7 @@ upstream() {
 
 }
 
-findTests() {
+function findTests() {
 	set ROOT_DIR="/root/directory"
 	set BRANCH_TO_CHECK=master
 
@@ -522,12 +515,12 @@ findTests() {
 }
 
 EXECUTING_USER=$(whoami)
-CURRENT_RED_HAT_RELEASE="$(cat /etc/redhat-release)"
-IS_RED_HAT_7=$(if [[ $(cat /etc/redhat-release) == "Red Hat"*"release 7"* ]]; then echo Yes; else echo No; fi)
-IS_RED_HAT_8=$(if [[ $(cat /etc/redhat-release) == "Red Hat"*"release 8"* ]]; then echo Yes; else echo No; fi)
+CURRENT_RED_HAT_RELEASE="$(cat /etc/os-release)"
+IS_RED_HAT_7=$(if [[ $(cat /etc/os-release) == "Red Hat"*"release 7"* ]]; then echo Yes; else echo No; fi)
+IS_RED_HAT_8=$(if [[ $(cat /etc/os-release) == "Red Hat"*"release 8"* ]]; then echo Yes; else echo No; fi)
 
 # set the Linux commands ignoring functions and aliases
-WHICH_="which --skip-alias --skip-functions"
+WHICH_="which"
 AWK_=$(${WHICH_} awk)
 SED_=$(${WHICH_} sed)
 GREP_=$(${WHICH_} grep)
@@ -742,6 +735,8 @@ function failThisScript() {
 	fi
 }
 
+
+
 # make sure the given parameter does not evaluate to "" or "/"
 # "return" the valid absolute directory-path
 # also reject "INVALID_{...} directories"
@@ -798,7 +793,7 @@ function removePackage() {
 
 DUMP_LOCATION="/var/lib/apport/coredump"
 alias enableDumps="ulimit -c unlimited"
-alias listDumps="find "${DUMP_LOCATION}" -f -name \"core.*\""
+alias listDumps="find ${DUMP_LOCATION} -f -name \"core.*\""
 alias clearDumps="sudo rm ${DUMP_LOCATION}/*"
 alias disableDumps="ulimit -c 0"
 
@@ -807,3 +802,9 @@ function debugDump() {
 	DUMP=$(findLatest /var/lib/apport/coredump/ -type f -name "core.*")
 	gdb "$EXE" -c "$DUMP"
 }
+
+# User specific environment
+addPath "$HOME/.local/bin"
+addPath "$HOME/bin"
+
+source "$HOME/venv/bin/activate"
