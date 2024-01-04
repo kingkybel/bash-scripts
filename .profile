@@ -305,7 +305,7 @@ function doValgrind() {
 	else
 		if [ "X${IS_LINUX}" = "XLinux" ]; then
 			echo "writing log to ./${EXECUTABLE}.valgrindLog"
-			/data/tecindev/tools/mot/netbeans/valgrind/bin/valgrind --tool=memcheck \
+			valgrind --tool=memcheck \
 				--leak-check=full \
 				--track-origins=yes \
 				--verbose \
@@ -806,5 +806,6 @@ function debugDump() {
 # User specific environment
 addPath "$HOME/.local/bin"
 addPath "$HOME/bin"
+addPath "."
 
 source "$HOME/venv/bin/activate"
