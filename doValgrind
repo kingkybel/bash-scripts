@@ -1,0 +1,23 @@
+#!/usr/bin/bash
+
+USAGE1="doValgrind executable [ ... ]"
+EXECUTABLE=$1
+echo "$EXECUTABLE"
+if [ "X${EXECUTABLE}" = "X" ]; then
+        echo "No executable defined"
+        echo "Usage: ${USAGE1}"
+else
+        echo "writing log to ./${EXECUTABLE}.valgrindLog"
+        valgrind --tool=memcheck \
+                --leak-check=full \
+                --track-origins=yes \
+                --verbose \
+                --trace-children=yes \
+                --vgdb=yes \
+                --fullpath-after= \
+                --read-var-info=yes \
+                --log-file=./${EXECUTABLE}.valgrindLog \
+                $*
+
+fi
+

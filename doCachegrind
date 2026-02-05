@@ -1,0 +1,18 @@
+#!/usr/bin/bash
+
+USAGE1="doCachegrind executable [ ... ]"
+EXECUTABLE=$1
+echo "$EXECUTABLE"
+if [ "X${EXECUTABLE}" = "X" ]; then
+        echo "No executable defined"
+        echo "Usage: ${USAGE1}"
+else
+        echo "writing log to ./${EXECUTABLE}.cachegrindLog"
+        valgrind --tool=cachegrind \
+                 --cachegrind-out-file=./${EXECUTABLE}.cachegrindLog \
+                $*
+
+        cg_annotate ./${EXECUTABLE}.cachegrindLog > ./${EXECUTABLE}.annotatedCachegrindLog
+
+fi
+

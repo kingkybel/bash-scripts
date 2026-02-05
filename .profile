@@ -148,7 +148,7 @@ function addLDPath() {
 function top10() {
 	OPTIND=1
 	USAGE1="totalSize [-p <path>] [-h]"
-	CHECK_PATH=$1
+	CHECK_PATH=${1:-.}
 	DO_EXECUTE=1
 	while getopts "p:h" OPTION; do
 		case ${OPTION} in
@@ -808,4 +808,15 @@ addPath "$HOME/.local/bin"
 addPath "$HOME/bin"
 addPath "."
 
-source "$HOME/venv/bin/activate"
+# activate python venv if it exists
+if [ -f "$HOME/venv/bin/activate" ]; then
+	source "$HOME/venv/bin/activate"
+fi
+
+# Use this file to define aliases for proprietary software that should not go to github.
+# For example, if you have a local alias for a command that is not available on all machines, you can put it in this file and it
+# will be sourced by .profile. Make sure to add .proprietary_aliases to .gitignore to avoid accidentally committing it.
+if [ -f "$HOME/.proprietary_aliases" ]; then
+	source "$HOME/.proprietary_aliases"
+fi
+

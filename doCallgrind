@@ -1,0 +1,20 @@
+#!/usr/bin/bash
+
+USAGE1="doCallgrind executable [ ... ]"
+EXECUTABLE=$1
+echo "$EXECUTABLE"
+if [ "X${EXECUTABLE}" = "X" ]; then
+        echo "No executable defined"
+        echo "Usage: ${USAGE1}"
+else
+        echo "writing log to ./${EXECUTABLE}.callgrindout"
+        valgrind --tool=callgrind \
+                --callgrind-out-file=./${EXECUTABLE}.callgrindout \
+                --dump-instr=yes \
+                --collect-jumps=yes \
+                $*
+
+fi
+
+kcachegrind ./${EXECUTABLE}.callgrindout &
+
